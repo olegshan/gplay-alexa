@@ -74,8 +74,9 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
                 log.error("Couldn't play {}", song, e);
                 return newAskRequest(ERROR);
             }
-        } else
+        } else {
             return newAskRequest(WRONG_REQUEST);
+        }
     }
 
     @Override
