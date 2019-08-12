@@ -87,10 +87,12 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
 
         Song song = new Song();
         Track track = api.getTrackApi().search(songRequest, 1).get(0);
+        String trackTitle = track.getTitle();
+        String artist = track.getArtist();
 
         MetaData metaData = new MetaData();
-        metaData.setTitle(track.getTitle());
-        metaData.setSubTitle(track.getArtist());
+        metaData.setTitle(trackTitle);
+        metaData.setSubTitle(artist);
         song.setMetaData(metaData);
 
         Stream stream = new Stream();
@@ -108,7 +110,7 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         SpeechletResponse response = new SpeechletResponse();
         response.setNullableShouldEndSession(null);
         PlainTextOutputSpeech speech = new PlainTextOutputSpeech();
-        speech.setText("Playing " + songRequest);
+        speech.setText("Playing " + trackTitle + " by " + artist);
         response.setOutputSpeech(speech);
         response.setDirectives(directives);
 
