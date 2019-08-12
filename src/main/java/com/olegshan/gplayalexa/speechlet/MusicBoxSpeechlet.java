@@ -84,9 +84,12 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
     }
 
     private SpeechletResponse playMusicResponse(String songRequest) throws Exception {
+        List<Track> trackList = api.getTrackApi().search(songRequest, 1);
+        if (trackList.isEmpty())
+            return noTrackFoundResponse(songRequest);
 
         Song song = new Song();
-        Track track = api.getTrackApi().search(songRequest, 1).get(0);
+        Track track = trackList.get(0);
         String trackTitle = track.getTitle();
         String artist = track.getArtist();
 
@@ -115,6 +118,15 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         response.setDirectives(directives);
 
         return null;
+    }
+
+    private SpeechletResponse noTrackFoundResponse(String songRequest) {
+        SpeechletResponse response = new SpeechletResponse();
+        PlainTextOutputSpeech speech = new PlainTextOutputSpeech();
+        speech.setText("Sorry, I couldn't find a song by request " + songRequest);
+        response.setOutputSpeech(speech);
+
+        return response;
     }
 
     private SpeechletResponse newAskRequest(String text) {
