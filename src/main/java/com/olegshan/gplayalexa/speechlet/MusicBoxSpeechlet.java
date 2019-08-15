@@ -3,6 +3,7 @@ package com.olegshan.gplayalexa.speechlet;
 import com.amazon.speech.json.SpeechletRequestEnvelope;
 import com.amazon.speech.slu.Intent;
 import com.amazon.speech.speechlet.*;
+import com.amazon.speech.speechlet.interfaces.audioplayer.AudioItem;
 import com.amazon.speech.speechlet.interfaces.audioplayer.PlayBehavior;
 import com.amazon.speech.speechlet.interfaces.audioplayer.Stream;
 import com.amazon.speech.speechlet.interfaces.audioplayer.directive.PlayDirective;
@@ -13,8 +14,6 @@ import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.model.Track;
 import com.github.felixgail.gplaymusic.model.enums.StreamQuality;
 import com.github.felixgail.gplaymusic.util.TokenProvider;
-import com.olegshan.gplayalexa.meta.MetaData;
-import com.olegshan.gplayalexa.meta.Song;
 import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,21 +87,14 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
             return noTrackFoundResponse(songRequest);
 
         Track track = trackList.get(0);
-        String trackTitle = track.getTitle();
-        String artist = track.getArtist();
-
-        MetaData metaData = new MetaData();
-        metaData.setTitle(trackTitle);
-        metaData.setSubTitle(artist);
-
-        Song song = new Song();
-        song.setMetaData(metaData);
 
         Stream stream = new Stream();
         stream.setUrl(track.getStreamURL(StreamQuality.HIGH).toString());
         stream.setOffsetInMilliseconds(0);
         stream.setExpectedPreviousToken(null);
         stream.setToken("0");
+
+        AudioItem song = new AudioItem();
         song.setStream(stream);
 
         PlayDirective directive = new PlayDirective();
@@ -112,8 +104,10 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         SpeechletResponse response = new SpeechletResponse();
         response.setDirectives(singletonList(directive));
         response.setNullableShouldEndSession(null);
+
         PlainTextOutputSpeech speech = new PlainTextOutputSpeech();
-        speech.setText("Playing " + trackTitle + " by " + artist);
+        speech.setText("Playing " + track.getTitle() + " by " + track.getArtist());
+
         response.setOutputSpeech(speech);
 
         return response;
@@ -121,6 +115,7 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
 
     private SpeechletResponse noTrackFoundResponse(String songRequest) {
         log.info("No track found for request [{}]", songRequest);
+
         SpeechletResponse response = new SpeechletResponse();
         PlainTextOutputSpeech speech = new PlainTextOutputSpeech();
         speech.setText("Sorry, I couldn't find a song by request " + songRequest);
@@ -136,6 +131,7 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         repromptSpeech.setText(CHOOSE_THE_SONG_REQUEST);
         Reprompt reprompt = new Reprompt();
         reprompt.setOutputSpeech(repromptSpeech);
+
         return SpeechletResponse.newAskResponse(speech, reprompt);
     }
 
@@ -144,6 +140,7 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         speech.setText("Goodbye");
         SpeechletResponse response = SpeechletResponse.newTellResponse(speech);
         response.setDirectives(singletonList(new StopDirective()));
+
         return response;
     }
 
@@ -163,7 +160,7 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
             .setAuthToken(token)
             .build();
 
-        log.info("Successfully logged in to Google Music.");
+        log.info("Successfully logged into Google Music.");
     }
 
     private void prepareLogger() {
