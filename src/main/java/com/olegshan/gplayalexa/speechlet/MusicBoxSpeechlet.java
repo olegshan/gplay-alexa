@@ -32,8 +32,9 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
     private static final String CHOOSE_THE_SONG_REQUEST = "Say 'play' and then name the artist and the song.";
     private static final String WRONG_REQUEST           = "Sorry, I didn't get that.";
     private static final String ERROR                   = "Sorry, something went wrong. Please try again.";
-    private static final String GOOGLE_MUSIC            = "GoogleMusic";
-    private static final String SONG_SLOT               = "song";
+
+    private static final String GOOGLE_MUSIC_INTENT = "GoogleMusic";
+    private static final String SONG_SLOT           = "song";
 
     private SpeechletResponse launchResponse;
 
@@ -72,7 +73,7 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         log.info("onIntent with requestId {}, sessionId {} and intent {}", request.getRequestId(), requestEnvelope.getSession().getSessionId(), name);
 
         switch (name) {
-            case GOOGLE_MUSIC:
+            case GOOGLE_MUSIC_INTENT:
                 String song = intent.getSlot(SONG_SLOT).getValue();
                 try {
                     return playMusicResponse(song);
