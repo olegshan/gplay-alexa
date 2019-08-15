@@ -36,41 +36,28 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
     private static final String GOOGLE_MUSIC_INTENT = "GoogleMusic";
     private static final String SONG_SLOT           = "song";
 
-    private SpeechletResponse launchResponse;
-
     private GPlayMusic api;
 
     @Override
     public void onSessionStarted(SpeechletRequestEnvelope<SessionStartedRequest> requestEnvelope) {
         prepareLogger();
-
-        log.info("onSessionStarted with requestId {} and sessionId {}", requestEnvelope.getRequest().getRequestId(), requestEnvelope.getSession().getSessionId());
-        launchResponse = newAskRequest(WELCOME_TEXT);
-
-        AuthToken token = null;
-        try {
-            token = TokenProvider.provideToken(System.getenv("USER_NAME"), System.getenv("USER_PASSWORD"), System.getenv("IMEI"));
-        } catch (IOException | Gpsoauth.TokenRequestFailed e) {
-            log.error("Error while auth token generating", e);
-        }
-
-        api = new GPlayMusic.Builder()
-            .setAuthToken(token)
-            .build();
+        logMethodStart("onSessionStarted", requestEnvelope);
+        prepareApi();
     }
 
     @Override
     public SpeechletResponse onLaunch(SpeechletRequestEnvelope<LaunchRequest> requestEnvelope) {
-        log.info("onLaunch with requestId {} and sessionId {}", requestEnvelope.getRequest().getRequestId(), requestEnvelope.getSession().getSessionId());
-        return launchResponse;
+        logMethodStart("onLaunch", requestEnvelope);
+        return newAskRequest(WELCOME_TEXT);
     }
 
     @Override
     public SpeechletResponse onIntent(SpeechletRequestEnvelope<IntentRequest> requestEnvelope) {
+        logMethodStart("onIntent", requestEnvelope);
         IntentRequest request = requestEnvelope.getRequest();
         Intent intent = request.getIntent();
         String name = intent.getName();
-        log.info("onIntent with requestId {}, sessionId {} and intent {}", request.getRequestId(), requestEnvelope.getSession().getSessionId(), name);
+        log.info("Requested intent: {}", name);
 
         switch (name) {
             case GOOGLE_MUSIC_INTENT:
@@ -92,7 +79,7 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
 
     @Override
     public void onSessionEnded(SpeechletRequestEnvelope<SessionEndedRequest> requestEnvelope) {
-        log.info("onSessionEnded with requestId {} and sessionId {}", requestEnvelope.getRequest().getRequestId(), requestEnvelope.getSession().getSessionId());
+        logMethodStart("onSessionEnded", requestEnvelope);
     }
 
     private SpeechletResponse playMusicResponse(String songRequest) throws Exception {
@@ -158,6 +145,25 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         SpeechletResponse response = SpeechletResponse.newTellResponse(speech);
         response.setDirectives(singletonList(new StopDirective()));
         return response;
+    }
+
+    private void logMethodStart(String methodName, SpeechletRequestEnvelope<? extends SpeechletRequest> request) {
+        log.info("{} with requestId {} and sessionId {}", methodName, request.getRequest().getRequestId(), request.getSession().getSessionId());
+    }
+
+    private void prepareApi() {
+        AuthToken token = null;
+        try {
+            token = TokenProvider.provideToken(System.getenv("USER_NAME"), System.getenv("USER_PASSWORD"), System.getenv("IMEI"));
+        } catch (IOException | Gpsoauth.TokenRequestFailed e) {
+            log.error("Error while auth token generating", e);
+        }
+
+        api = new GPlayMusic.Builder()
+            .setAuthToken(token)
+            .build();
+
+        log.info("Successfully logged in to Google Music.");
     }
 
     private void prepareLogger() {
