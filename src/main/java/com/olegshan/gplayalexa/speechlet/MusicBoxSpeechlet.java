@@ -6,6 +6,7 @@ import com.amazon.speech.speechlet.*;
 import com.amazon.speech.speechlet.interfaces.audioplayer.PlayBehavior;
 import com.amazon.speech.speechlet.interfaces.audioplayer.Stream;
 import com.amazon.speech.speechlet.interfaces.audioplayer.directive.PlayDirective;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.StopDirective;
 import com.amazon.speech.ui.PlainTextOutputSpeech;
 import com.amazon.speech.ui.Reprompt;
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
@@ -14,18 +15,20 @@ import com.github.felixgail.gplaymusic.model.enums.StreamQuality;
 import com.github.felixgail.gplaymusic.util.TokenProvider;
 import com.olegshan.gplayalexa.meta.MetaData;
 import com.olegshan.gplayalexa.meta.Song;
+import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svarzee.gps.gpsoauth.AuthToken;
 import svarzee.gps.gpsoauth.Gpsoauth;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 public class MusicBoxSpeechlet implements SpeechletV2 {
 
-    private static final String WELCOME_TEXT            = "Welcome to Google Play Music skill.";
+    private static final String WELCOME_TEXT            = "Welcome to Google Music skill.";
     private static final String CHOOSE_THE_SONG_REQUEST = "Say 'play' and then name the artist and the song.";
     private static final String WRONG_REQUEST           = "Sorry, I didn't get that.";
     private static final String ERROR                   = "Sorry, something went wrong. Please try again.";
@@ -38,6 +41,8 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
 
     @Override
     public void onSessionStarted(SpeechletRequestEnvelope<SessionStartedRequest> requestEnvelope) {
+        prepareLogger();
+
         log.info("onSessionStarted with requestId {} and sessionId {}", requestEnvelope.getRequest().getRequestId(), requestEnvelope.getSession().getSessionId());
         launchResponse = newAskRequest(WELCOME_TEXT);
 
@@ -45,7 +50,7 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         try {
             token = TokenProvider.provideToken(System.getenv("USER_NAME"), System.getenv("USER_PASSWORD"), System.getenv("IMEI"));
         } catch (IOException | Gpsoauth.TokenRequestFailed e) {
-            e.printStackTrace();
+            log.error("Error while auth token generating", e);
         }
 
         api = new GPlayMusic.Builder()
@@ -66,16 +71,21 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         String name = intent.getName();
         log.info("onIntent with requestId {}, sessionId {} and intent {}", request.getRequestId(), requestEnvelope.getSession().getSessionId(), name);
 
-        if (GOOGLE_MUSIC.equals(name)) {
-            String song = intent.getSlot(SONG_SLOT).getValue();
-            try {
-                return playMusicResponse(song);
-            } catch (Exception e) {
-                log.error("Couldn't play {}", song, e);
-                return newAskRequest(ERROR);
-            }
-        } else {
-            return newAskRequest(WRONG_REQUEST);
+        switch (name) {
+            case GOOGLE_MUSIC:
+                String song = intent.getSlot(SONG_SLOT).getValue();
+                try {
+                    return playMusicResponse(song);
+                } catch (Exception e) {
+                    log.error("Couldn't play {}", song, e);
+                    return newAskRequest(ERROR);
+                }
+            case "AMAZON.StopIntent":
+            case "AMAZON.CancelIntent":
+                return goodbye();
+            default:
+                log.error("Unexpected intent: " + name);
+                return newAskRequest(WRONG_REQUEST);
         }
     }
 
@@ -89,7 +99,6 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         if (trackList.isEmpty())
             return noTrackFoundResponse(songRequest);
 
-        Song song = new Song();
         Track track = trackList.get(0);
         String trackTitle = track.getTitle();
         String artist = track.getArtist();
@@ -97,31 +106,33 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         MetaData metaData = new MetaData();
         metaData.setTitle(trackTitle);
         metaData.setSubTitle(artist);
+
+        Song song = new Song();
         song.setMetaData(metaData);
 
         Stream stream = new Stream();
         stream.setUrl(track.getStreamURL(StreamQuality.HIGH).toString());
         stream.setOffsetInMilliseconds(0);
+        stream.setExpectedPreviousToken(null);
+        stream.setToken("0");
         song.setStream(stream);
 
         PlayDirective directive = new PlayDirective();
         directive.setAudioItem(song);
         directive.setPlayBehavior(PlayBehavior.REPLACE_ALL);
 
-        List<Directive> directives = new ArrayList<>();
-        directives.add(directive);
-
         SpeechletResponse response = new SpeechletResponse();
+        response.setDirectives(singletonList(directive));
         response.setNullableShouldEndSession(null);
         PlainTextOutputSpeech speech = new PlainTextOutputSpeech();
         speech.setText("Playing " + trackTitle + " by " + artist);
         response.setOutputSpeech(speech);
-        response.setDirectives(directives);
 
-        return null;
+        return response;
     }
 
     private SpeechletResponse noTrackFoundResponse(String songRequest) {
+        log.info("No track found for request [{}]", songRequest);
         SpeechletResponse response = new SpeechletResponse();
         PlainTextOutputSpeech speech = new PlainTextOutputSpeech();
         speech.setText("Sorry, I couldn't find a song by request " + songRequest);
@@ -138,6 +149,19 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         Reprompt reprompt = new Reprompt();
         reprompt.setOutputSpeech(repromptSpeech);
         return SpeechletResponse.newAskResponse(speech, reprompt);
+    }
+
+    private SpeechletResponse goodbye() {
+        PlainTextOutputSpeech speech = new PlainTextOutputSpeech();
+        speech.setText("Goodbye");
+        SpeechletResponse response = SpeechletResponse.newTellResponse(speech);
+        response.setDirectives(singletonList(new StopDirective()));
+        return response;
+    }
+
+    private void prepareLogger() {
+        String log4jConfPath = "log4j.properties";
+        PropertyConfigurator.configure(log4jConfPath);
     }
 
     private static final Logger log = LoggerFactory.getLogger(MusicBoxSpeechlet.class);
