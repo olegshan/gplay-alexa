@@ -23,17 +23,10 @@ import svarzee.gps.gpsoauth.Gpsoauth;
 import java.io.IOException;
 import java.util.List;
 
+import static com.olegshan.gplayalexa.speechlet.SpeechletConstants.*;
 import static java.util.Collections.singletonList;
 
 public class GoogleMusicSpeechlet implements SpeechletV2 {
-
-    private static final String WELCOME_TEXT            = "Welcome to Google Music skill.";
-    private static final String CHOOSE_THE_SONG_REQUEST = "Say 'play' and then name the artist and the song.";
-    private static final String WRONG_REQUEST           = "Sorry, I didn't get that.";
-    private static final String ERROR                   = "Sorry, something went wrong. Please try again.";
-
-    private static final String GOOGLE_MUSIC_INTENT = "GoogleMusic";
-    private static final String SONG_SLOT           = "song";
 
     private GPlayMusic api;
 
