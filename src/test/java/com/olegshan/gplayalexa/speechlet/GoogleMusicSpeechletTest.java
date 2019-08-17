@@ -8,8 +8,6 @@ import com.amazon.speech.ui.PlainTextOutputSpeech;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Date;
-
 import static com.olegshan.gplayalexa.speechlet.SpeechletConstants.CHOOSE_THE_SONG_REQUEST;
 import static com.olegshan.gplayalexa.speechlet.SpeechletConstants.WELCOME_TEXT;
 import static org.junit.Assert.assertEquals;
@@ -42,6 +40,7 @@ public class GoogleMusicSpeechletTest {
 
     @Test
     public void onIntent() {
+
     }
 
     private SpeechletRequestEnvelope<LaunchRequest> buildLaunchRequestEnvelope() {
@@ -58,7 +57,6 @@ public class GoogleMusicSpeechletTest {
     private static LaunchRequest buildLaunchRequest() {
         return LaunchRequest.builder()
             .withRequestId("requestId")
-            .withTimestamp(new Date())
             .build();
     }
 }
