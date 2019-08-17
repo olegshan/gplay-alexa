@@ -25,7 +25,7 @@ import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-public class MusicBoxSpeechlet implements SpeechletV2 {
+public class GoogleMusicSpeechlet implements SpeechletV2 {
 
     private static final String WELCOME_TEXT            = "Welcome to Google Music skill.";
     private static final String CHOOSE_THE_SONG_REQUEST = "Say 'play' and then name the artist and the song.";
@@ -168,5 +168,5 @@ public class MusicBoxSpeechlet implements SpeechletV2 {
         PropertyConfigurator.configure(log4jConfPath);
     }
 
-    private static final Logger log = LoggerFactory.getLogger(MusicBoxSpeechlet.class);
+    private static final Logger log = LoggerFactory.getLogger(GoogleMusicSpeechlet.class);
 }
