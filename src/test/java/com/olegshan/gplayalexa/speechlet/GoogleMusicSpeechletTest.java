@@ -143,6 +143,16 @@ public class GoogleMusicSpeechletTest {
         checkStopIntent(response);
     }
 
+    @Test
+    public void testWrongIntent() {
+        SpeechletResponse response = speechlet.onIntent(
+            buildIntentRequestEnvelope("SomeWrongIntent", "NoMatter", "NoMatter")
+        );
+
+        checkOutputSpeech(response.getOutputSpeech(), WRONG_REQUEST);
+        checkOutputSpeech(response.getReprompt().getOutputSpeech(), CHOOSE_THE_SONG_REQUEST);
+    }
+
     private void checkStopIntent(SpeechletResponse response) {
         checkOutputSpeech(response.getOutputSpeech(), "Goodbye");
         assertNotNull(response.getDirectives());
