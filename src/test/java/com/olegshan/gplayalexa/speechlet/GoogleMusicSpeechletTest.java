@@ -8,6 +8,7 @@ import com.amazon.speech.speechlet.LaunchRequest;
 import com.amazon.speech.speechlet.Session;
 import com.amazon.speech.speechlet.SpeechletResponse;
 import com.amazon.speech.speechlet.interfaces.audioplayer.directive.PlayDirective;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.StopDirective;
 import com.amazon.speech.ui.OutputSpeech;
 import com.amazon.speech.ui.PlainTextOutputSpeech;
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
@@ -124,6 +125,29 @@ public class GoogleMusicSpeechletTest {
 
         checkOutputSpeech(response.getOutputSpeech(), "Sorry, I couldn't find a song by request " + songRequest);
         assertNull(response.getDirectives());
+    }
+
+    @Test
+    public void testStopIntent() {
+        SpeechletResponse response = speechlet.onIntent(
+            buildIntentRequestEnvelope("AMAZON.StopIntent", "NoMatter", "NoMatter")
+        );
+        checkStopIntent(response);
+    }
+
+    @Test
+    public void testCancelIntent() {
+        SpeechletResponse response = speechlet.onIntent(
+            buildIntentRequestEnvelope("AMAZON.CancelIntent", "NoMatter", "NoMatter")
+        );
+        checkStopIntent(response);
+    }
+
+    private void checkStopIntent(SpeechletResponse response) {
+        checkOutputSpeech(response.getOutputSpeech(), "Goodbye");
+        assertNotNull(response.getDirectives());
+        assertEquals(1, response.getDirectives().size());
+        assertTrue(response.getDirectives().get(0) instanceof StopDirective);
     }
 
     private void checkOutputSpeech(OutputSpeech outputSpeech, String speechText) {
