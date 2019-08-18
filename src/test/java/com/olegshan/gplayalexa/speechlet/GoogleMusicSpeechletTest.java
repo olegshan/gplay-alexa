@@ -52,7 +52,7 @@ public class GoogleMusicSpeechletTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        session = buildSession();
+        session = Session.builder().withSessionId(TEST_SESSION_ID).build();
 
         when(googleApiMock.getTrackApi()).thenReturn(trackApiMock);
     }
@@ -129,25 +129,19 @@ public class GoogleMusicSpeechletTest {
 
     @Test
     public void testStopIntent() {
-        SpeechletResponse response = speechlet.onIntent(
-            buildIntentRequestEnvelope("AMAZON.StopIntent", "NoMatter", "NoMatter")
-        );
+        SpeechletResponse response = speechlet.onIntent(buildIntentRequestEnvelope("AMAZON.StopIntent"));
         checkStopIntent(response);
     }
 
     @Test
     public void testCancelIntent() {
-        SpeechletResponse response = speechlet.onIntent(
-            buildIntentRequestEnvelope("AMAZON.CancelIntent", "NoMatter", "NoMatter")
-        );
+        SpeechletResponse response = speechlet.onIntent(buildIntentRequestEnvelope("AMAZON.CancelIntent"));
         checkStopIntent(response);
     }
 
     @Test
     public void testWrongIntent() {
-        SpeechletResponse response = speechlet.onIntent(
-            buildIntentRequestEnvelope("SomeWrongIntent", "NoMatter", "NoMatter")
-        );
+        SpeechletResponse response = speechlet.onIntent(buildIntentRequestEnvelope("SomeWrongIntent"));
 
         checkOutputSpeech(response.getOutputSpeech(), WRONG_REQUEST);
         checkOutputSpeech(response.getReprompt().getOutputSpeech(), CHOOSE_THE_SONG_REQUEST);
@@ -172,6 +166,10 @@ public class GoogleMusicSpeechletTest {
             .withRequest(buildLaunchRequest())
             .withSession(session)
             .build();
+    }
+
+    private SpeechletRequestEnvelope<IntentRequest> buildIntentRequestEnvelope(String intentName) {
+        return buildIntentRequestEnvelope(intentName, "NoMatter", "NoMatter");
     }
 
     private SpeechletRequestEnvelope<IntentRequest> buildIntentRequestEnvelope(
@@ -206,9 +204,5 @@ public class GoogleMusicSpeechletTest {
             .withRequestId(TEST_REQUEST_ID)
             .withIntent(intent)
             .build();
-    }
-
-    private Session buildSession() {
-        return Session.builder().withSessionId(TEST_SESSION_ID).build();
     }
 }
