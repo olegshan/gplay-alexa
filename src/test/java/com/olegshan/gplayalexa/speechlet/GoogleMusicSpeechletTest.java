@@ -25,11 +25,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.net.URL;
 
 import static com.olegshan.gplayalexa.speechlet.SpeechletConstants.*;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleMusicSpeechletTest {
@@ -102,6 +102,28 @@ public class GoogleMusicSpeechletTest {
         PlayDirective directive = (PlayDirective) response.getDirectives().get(0);
         assertNotNull(directive.getAudioItem());
         assertEquals(streamUrl, directive.getAudioItem().getStream().getUrl());
+    }
+
+    @Test
+    public void onIntentWithNotCorrectRequest() throws Exception {
+        String songRequest = "Some song that can't be found";
+
+        when(trackApiMock.search(songRequest, 1))
+            .thenReturn(emptyList());
+
+        SpeechletResponse response = speechlet.onIntent(
+            buildIntentRequestEnvelope(
+                GOOGLE_MUSIC_INTENT,
+                SONG_SLOT,
+                songRequest
+            )
+        );
+
+        verify(trackApiMock).search(songRequest, 1);
+        verifyZeroInteractions(trackMock);
+
+        checkOutputSpeech(response.getOutputSpeech(), "Sorry, I couldn't find a song by request " + songRequest);
+        assertNull(response.getDirectives());
     }
 
     private void checkOutputSpeech(OutputSpeech outputSpeech, String speechText) {
