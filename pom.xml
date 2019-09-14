@@ -23,7 +23,7 @@
 		<dependency>
 			<groupId>com.github.felixgail</groupId>
 			<artifactId>gplaymusic</artifactId>
-			<version>0.3.6</version>
+			<version>0.3.8</version>
 		</dependency>
 
 		<dependency>
