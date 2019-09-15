@@ -61,7 +61,7 @@ public class GoogleMusicSpeechletTest {
     public void onLaunch() {
         SpeechletResponse response = speechlet.onLaunch(buildLaunchRequestEnvelope());
         checkOutputSpeech(response.getOutputSpeech(), WELCOME_TEXT);
-        checkOutputSpeech(response.getReprompt().getOutputSpeech(), CHOOSE_THE_SONG_REQUEST);
+        checkOutputSpeech(response.getReprompt().getOutputSpeech(), CHOOSE_THE_MUSIC_REQUEST);
     }
 
     @Test
@@ -83,7 +83,7 @@ public class GoogleMusicSpeechletTest {
 
         SpeechletResponse response = speechlet.onIntent(
             buildIntentRequestEnvelope(
-                GOOGLE_MUSIC_INTENT,
+                SINGLE_SONG,
                 SONG_SLOT,
                 songRequest
             )
@@ -114,7 +114,7 @@ public class GoogleMusicSpeechletTest {
 
         SpeechletResponse response = speechlet.onIntent(
             buildIntentRequestEnvelope(
-                GOOGLE_MUSIC_INTENT,
+                SINGLE_SONG,
                 SONG_SLOT,
                 songRequest
             )
@@ -144,11 +144,10 @@ public class GoogleMusicSpeechletTest {
         SpeechletResponse response = speechlet.onIntent(buildIntentRequestEnvelope("SomeWrongIntent"));
 
         checkOutputSpeech(response.getOutputSpeech(), WRONG_REQUEST);
-        checkOutputSpeech(response.getReprompt().getOutputSpeech(), CHOOSE_THE_SONG_REQUEST);
+        checkOutputSpeech(response.getReprompt().getOutputSpeech(), CHOOSE_THE_MUSIC_REQUEST);
     }
 
     private void checkStopIntent(SpeechletResponse response) {
-        checkOutputSpeech(response.getOutputSpeech(), "Goodbye");
         assertNotNull(response.getDirectives());
         assertEquals(1, response.getDirectives().size());
         assertTrue(response.getDirectives().get(0) instanceof StopDirective);
