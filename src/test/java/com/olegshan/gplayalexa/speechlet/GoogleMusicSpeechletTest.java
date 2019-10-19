@@ -13,8 +13,10 @@ import com.amazon.speech.ui.OutputSpeech;
 import com.amazon.speech.ui.PlainTextOutputSpeech;
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.api.TrackApi;
+import com.github.felixgail.gplaymusic.model.Album;
 import com.github.felixgail.gplaymusic.model.Track;
 import com.github.felixgail.gplaymusic.model.enums.StreamQuality;
+import com.github.felixgail.gplaymusic.model.responses.SearchResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +26,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.URL;
+import java.util.Optional;
 
 import static com.olegshan.gplayalexa.speechlet.SpeechletConstants.*;
 import static java.util.Collections.emptyList;
@@ -38,11 +41,15 @@ public class GoogleMusicSpeechletTest {
     private static final String TEST_REQUEST_ID = "requestId";
 
     @Mock
-    private GPlayMusic googleApiMock;
+    private GPlayMusic     googleApiMock;
     @Mock
-    private TrackApi   trackApiMock;
+    private TrackApi       trackApiMock;
     @Mock
-    private Track      trackMock;
+    private Track          trackMock;
+    @Mock
+    private Album          albumMock;
+    @Mock
+    private SearchResponse searchResponseMock;
 
     private static Session session;
 
@@ -65,7 +72,7 @@ public class GoogleMusicSpeechletTest {
     }
 
     @Test
-    public void onIntentWithCorrectRequest() throws Exception {
+    public void onIntentWithCorrectSingleSongRequest() throws Exception {
         String songRequest = "Metallica The Unforgiven";
         String streamUrl = "https://stream_url.com";
 
@@ -95,6 +102,64 @@ public class GoogleMusicSpeechletTest {
         verify(trackMock).getStreamURL(StreamQuality.HIGH);
 
         checkOutputSpeech(response.getOutputSpeech(), "Playing The Unforgiven by Metallica");
+
+        assertNotNull(response.getDirectives());
+        assertEquals(1, response.getDirectives().size());
+        assertTrue(response.getDirectives().get(0) instanceof PlayDirective);
+
+        PlayDirective directive = (PlayDirective) response.getDirectives().get(0);
+        assertNotNull(directive.getAudioItem());
+        assertEquals(streamUrl, directive.getAudioItem().getStream().getUrl());
+    }
+
+    @Test
+    public void onIntentWithCorrectAlbumRequest() throws Exception {
+        String albumRequest = "The Prodigy The Fat of the Land";
+        String albumId = "AlbumId";
+        String streamUrl = "https://stream_url.com";
+
+        when(googleApiMock.search(anyString(), anyInt(), any()))
+            .thenReturn(searchResponseMock);
+
+        when(searchResponseMock.getAlbums())
+            .thenReturn(singletonList(albumMock));
+
+        when(albumMock.getAlbumId())
+            .thenReturn(albumId);
+
+        when(googleApiMock.getAlbum(albumId, true))
+            .thenReturn(albumMock);
+
+        when(albumMock.getTracks())
+            .thenReturn(Optional.of(singletonList(trackMock)));
+
+        when(albumMock.getName())
+            .thenReturn("The Fat of the Land");
+
+        when(albumMock.getAlbumArtist())
+            .thenReturn("The Prodigy");
+
+        when(trackMock.getStreamURL(any()))
+            .thenReturn(new URL(streamUrl));
+
+        SpeechletResponse response = speechlet.onIntent(
+            buildIntentRequestEnvelope(
+                ALBUM,
+                ALBUM_SLOT,
+                albumRequest
+            )
+        );
+
+        verify(googleApiMock).search(anyString(), anyInt(), any());
+        verify(searchResponseMock).getAlbums();
+        verify(albumMock).getAlbumId();
+        verify(googleApiMock).getAlbum(albumId, true);
+        verify(albumMock).getTracks();
+        verify(albumMock).getName();
+        verify(albumMock).getAlbumArtist();
+        verify(trackMock).getStreamURL(StreamQuality.HIGH);
+
+        checkOutputSpeech(response.getOutputSpeech(), "Playing album The Fat of the Land by The Prodigy");
 
         assertNotNull(response.getDirectives());
         assertEquals(1, response.getDirectives().size());
